@@ -1,12 +1,6 @@
-package com.heyx.hook.service;
+package com.heyx.hook.process;
 
-import java.io.BufferedWriter;
-import java.io.File;
-import java.io.FileWriter;
-import java.io.IOException;
-import java.text.SimpleDateFormat;
-import java.util.Date;
-
+import com.heyx.hook.entity.Action;
 import com.sun.jna.Structure;
 import com.sun.jna.platform.win32.Kernel32;
 import com.sun.jna.platform.win32.User32;
@@ -15,13 +9,13 @@ import com.sun.jna.platform.win32.WinUser;
 
 public class MouseHook implements Runnable {
 
-    public static final int WM_MOUSEMOVE = 512;
+    private static final int WM_MOUSEMOVE = 512;
     private static WinUser.HHOOK hhk;
     private static LowLevelMouseProc mouseHook;
     final static User32 lib = User32.INSTANCE;
     private boolean [] on_off=null;
 
-    public MouseHook(boolean [] on_off){
+    MouseHook(boolean[] on_off){
         this.on_off = on_off;
     }
 
@@ -45,33 +39,15 @@ public class MouseHook implements Runnable {
         mouseHook = new LowLevelMouseProc() {
             public WinDef.LRESULT callback(int nCode, WinDef.WPARAM wParam,
                                            MOUSEHOOKSTRUCT info) {
-                SimpleDateFormat df1 = new SimpleDateFormat("yyyy-MM-dd");
-                SimpleDateFormat df2 = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
-                String fileName=df1.format(new Date());
-                String time=df2.format(new Date());
-                BufferedWriter bw1=null;
-                BufferedWriter bw2=null;
-                try {
-                    bw1=new BufferedWriter(new FileWriter(new File(".//log//"+fileName+"_Mouse.txt"),true));
-                    bw2=new BufferedWriter(new FileWriter(new File(".//log//"+fileName+"_Common.txt"),true));
-                } catch (IOException e) {
-                    e.printStackTrace();
-                }
+                Action action = new Action();
                 if (!on_off[0]) {
                     System.exit(0);
                 }
                 if (nCode >= 0) {
                     if (wParam.intValue() == MouseHook.WM_MOUSEMOVE) {
-                        try {
-                            bw1.write(time + "  ####  " + "x=" + info.pt.x
-                                    + " y=" + info.pt.y + "\r\n");
-                            bw2.write(time + "  ####  " + "x=" + info.pt.x
-                                    + " y=" + info.pt.y + "\r\n");
-                            bw1.flush();
-                            bw2.flush();
-                        } catch (IOException e) {
-                            e.printStackTrace();
-                        }
+                        String option = "x=" + info.pt.x +" y=" + info.pt.y;
+                        //TODO
+                        action.setOperation(option);
                     }
                 }
                 return lib.CallNextHookEx(hhk, nCode, wParam, info.pointer);
